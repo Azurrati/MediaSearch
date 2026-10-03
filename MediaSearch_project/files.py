@@ -19,6 +19,8 @@ def get_files(path: str) -> list:
                 logging.debug(f'Got file path: {dirpath + file_name}')
 
             first_directory = False
+    elif os.path.isfile(path):
+        files_to_scan.append(path)
     
     return files_to_scan
     

@@ -1,14 +1,11 @@
 import cv2 as cv
 from MediaSearch_project.scanners import image as image_engine
 import math
+from rich import print
 
 def scan(path: str,
                ocr: str,
-               sr: str,
-               sr_model: str,
-               seconds: int,
-               confidence_val: int = 90,
-               search: list | None = None):
+               seconds: int,):
     
     cap = cv.VideoCapture(path)
     total_frames = cap.get(cv.CAP_PROP_FRAME_COUNT)
@@ -28,15 +25,15 @@ def scan(path: str,
 
     while frame_count <= total_frames:
         # Skip Frames
+        frame_count += 1
+
         if frame_count % time != 0 and frame_count != 0:
-            frame_count += 1
             continue
-        elif frame_count == 0:
-            frame_count += 1
         else:
             cap.set(cv.CAP_PROP_POS_FRAMES, frame_count)
 
         ret, frame = cap.read()
+        print(f'[[blue]-[/blue]] [yellow]{path}[/yellow] [blue]Frame {frame_count} out of {int(total_frames)}[/blue]')
 
         # Frame reading Error
         if not ret and frame_count != total_frames:
@@ -52,6 +49,7 @@ def scan(path: str,
                 else:
                     print('Please enter a valid input.')
 
-        frames_scanned.append((time, image_engine.scan(ocr, frame)))
-    
+        frames_scanned.append((frame_count, image_engine.scan(frame, ocr)))
+
+
     return frames_scanned

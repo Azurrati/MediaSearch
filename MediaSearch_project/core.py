@@ -62,7 +62,7 @@ class Core_Components:
                 if file_type in image_type:
                     data = image_engine.scan(file, ocr)
                 elif file_type in video_type:
-                    data = video_engine.scan(file, ocr)
+                    data = video_engine.scan(file, ocr, time)
                 elif file_type in audio_type:
                     data = audio_engine.scan(file, sr_model)
                 else:
@@ -79,6 +79,7 @@ class Core_Components:
                 elif file_type in video_type:
                     file_data[file]["ocr_engine"] = ocr
                     file_data[file]["sha256"] = hash_file
+                    file_data[file]["Frames"] = {}
                     for time, text in data:
                         file_data[file]["Frames"][f"Frame {time}"] = text
                         search_result = search.search(search_words, text, confidence)
@@ -101,8 +102,10 @@ class Core_Components:
 
         except KeyboardInterrupt:
             print('[[red]![/red]] [red]Keyboard Interrupt Detected! Saving...[/red]')
-
-        return file_data
+        except Exception as e:
+            print(f'[[red]![/red]] [red]An error occurred: {e}[/red]')
+        finally:
+            return file_data
 
 
     @staticmethod
