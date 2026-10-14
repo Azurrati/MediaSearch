@@ -4,52 +4,73 @@ import math
 from rich import print
 
 def scan(path: str,
-               ocr: str,
-               seconds: int,):
-    
-    cap = cv.VideoCapture(path)
-    total_frames = cap.get(cv.CAP_PROP_FRAME_COUNT)
-    frame_count = 0
+        ocr: str,
+        seconds: int,
+        sensory: str,
+        sr_model: str):
 
-    fps = cap.get(cv.CAP_PROP_FPS)
-    time = math.floor(fps * seconds)   # Converts seconds to frames
+    def scan_video():
+        cap = cv.VideoCapture(path)
+        total_frames = cap.get(cv.CAP_PROP_FRAME_COUNT)
+        frame_count = 0
 
-    frames_scanned = []
+        fps = cap.get(cv.CAP_PROP_FPS)
+        time = math.floor(fps * seconds)   # Converts seconds to frames
 
-    # Cannot open video
-    if not cap.isOpened():
-        print(f'Unable to open video path: {path}.')
-        return ''
-    
-    # Iterate frames
+        frames_scanned = []
 
-    while frame_count <= total_frames:
-        # Skip Frames
-        frame_count += 1
+        # Cannot open video
+        if not cap.isOpened():
+            print(f'Unable to open video path: {path}.')
+            return ''
+        
+        # Iterate frames
 
-        if frame_count % time != 0 and frame_count != 0:
-            continue
-        else:
-            cap.set(cv.CAP_PROP_POS_FRAMES, frame_count)
+        while frame_count <= total_frames:
+            # Skip Frames
+            frame_count += 1
 
-        ret, frame = cap.read()
-        print(f'[[blue]-[/blue]] [yellow]{path}[/yellow] [blue]Frame {frame_count} out of {int(total_frames)}[/blue]')
+            if frame_count % time != 0 and frame_count != 0:
+                continue
+            else:
+                cap.set(cv.CAP_PROP_POS_FRAMES, frame_count)
 
-        # Frame reading Error
-        if not ret and frame_count != total_frames:
-            error_input = ''
+            ret, frame = cap.read()
+            print(f'[[blue]-[/blue]] [yellow]{path}[/yellow] [blue]Frame {frame_count} out of {int(total_frames)}[/blue]')
 
-            while error_input not in ['y','yes','n','no']:
-                error_input = input('There was an error while trying to read a frame. Continue? (Y/N)')
+            # Frame reading Error
+            if not ret and frame_count != total_frames:
+                error_input = ''
 
-                if error_input.lower() in ['y','yes']:
-                    continue
-                elif error_input.lower() in ['n','no']:
-                    return ''
-                else:
-                    print('Please enter a valid input.')
+                while error_input not in ['y','yes','n','no']:
+                    error_input = input('There was an error while trying to read a frame. Continue? (Y/N)')
 
-        frames_scanned.append((frame_count, image_engine.scan(frame, ocr)))
+                    if error_input.lower() in ['y','yes']:
+                        continue
+                    elif error_input.lower() in ['n','no']:
+                        return ''
+                    else:
+                        print('Please enter a valid input.')
+
+            frames_scanned.append((frame_count, image_engine.scan(frame, ocr)))
 
 
-    return frames_scanned
+        return frames_scanned
+
+    def scan_audio():
+        from MediaSearch_project.scanners import audio
+
+        return audio.scan(path, sr_model)
+
+
+    if sensory in ['all', 'vision']:
+        frames_decoded = scan_video()
+    else:
+        frames_decoded = []
+
+    if sensory in ['all', 'auditory']:
+        audio_decoded = scan_audio()
+    else:
+        audio_decoded = []
+
+    return (frames_decoded, audio_decoded)

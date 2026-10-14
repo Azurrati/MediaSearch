@@ -32,7 +32,7 @@ class Core_Components:
         return validated_files
 
 
-    def scan(self, files, ocr, sr, sr_model, time, confidence, search_words, verbose):
+    def scan(self, files, ocr, sensory, sr, sr_model, time, confidence, search_words, verbose):
         from MediaSearch_project import search
         from MediaSearch_project.scanners import(
             image as image_engine,
@@ -49,7 +49,7 @@ class Core_Components:
 
         try:
             for file in files:
-                file_type = re.search(r"\.([^.]+)$", file).group(1)
+                file_type = re.search(r"\.([^.]+)$", file).group(1)     # Gets the file type
 
                 with open(file, "rb") as f:
                     hash_object = hashlib.file_digest(f, "sha256")
@@ -62,7 +62,7 @@ class Core_Components:
                 if file_type in image_type:
                     data = image_engine.scan(file, ocr)
                 elif file_type in video_type:
-                    data = video_engine.scan(file, ocr, time)
+                    data = video_engine.scan(file, ocr, time, sensory, sr_model)
                 elif file_type in audio_type:
                     data = audio_engine.scan(file, sr_model)
                 else:
@@ -80,12 +80,20 @@ class Core_Components:
                     file_data[file]["ocr_engine"] = ocr
                     file_data[file]["sha256"] = hash_file
                     file_data[file]["Frames"] = {}
-                    for time, text in data:
+                    file_data[file]["Audio"] = {}
+
+                    frames_data, audio_data = data[0], data[1]
+
+                    for time, text in frames_data:
                         file_data[file]["Frames"][f"Frame {time}"] = text
                         search_result = search.search(search_words, text, confidence)
 
+                    for time, text in audio_data:
+                        file_data[file]["Audio"][f"Segment {time}"] = text
+
                 elif file_type in audio_type:
                     file_data[file]["sha256"] = hash_file
+                    file_data[file]["Segments"] = {}
                     for segment, text in data:
                         file_data[file]["Segments"][segment] = text
                         search_result = search.search(search_words, text, confidence)
@@ -135,6 +143,6 @@ def main(path, media, sensory, search, ocr, time, confidence, sr, sr_model, verb
     core_components.validate_configuration(path, media, sensory, confidence)
 
     validated_files = core_components.start_files(path, media, sensory)
-    text_data = core_components.scan(validated_files, ocr, sr, sr_model, time, confidence, search, verbosity)
+    text_data = core_components.scan(validated_files, ocr, sensory, sr, sr_model, time, confidence, search, verbosity)
 
     core_components.output(text_data)
